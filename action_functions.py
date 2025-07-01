@@ -9,19 +9,17 @@ from jax import jit, value_and_grad, random
 from functools import partial
 import optax
 
+# ------ Trivial Boundary Conditions Protototype ------
+
+@jit
 def fourier_basis_expansion(t_array, coeffs):
     k = coeffs.shape[0]
     T = t_array[-1] - t_array[0]
     basis = jnp.stack([jnp.sin((n + 1) * jnp.pi * t_array / T) for n in range(k)])
     return jnp.dot(coeffs, basis)
 
-def action_coeff_fn(coeffs, t_a:float=0., t_b:float=1., m:float=1., N:int=20, potential=None):
-    t_array = jnp.linspace(t_a, t_b, N)
-    x = fourier_basis_expansion(t_array, coeffs)
-    return action(x, t_a=t_a, t_b=t_b, m=m, N=N, potential=potential)
-
-@partial(jit, static_argnames=('t_a', 't_b', 'm', 'N', 'potential'))
-def action(x, t_a:float=0., t_b:float=1., m:float=1., N:int=20, potential=None):
+@partial(jit, static_argnames=('m', 'potential', 'basis_ansatz'))
+def action(x, t_array, m:float=1., potential=None, basis_ansatz=None, coeffs=None):
     """
     Computes the action for a given path x(t) between times t_a and t_b.
     Args:
@@ -31,15 +29,21 @@ def action(x, t_a:float=0., t_b:float=1., m:float=1., N:int=20, potential=None):
         m (float): Mass of the particle.
         N (int): Number of discrete time steps.
         potential (callable): Function to compute the potential energy.
+        basis_ansatz (callable, optional): Function to compute the path from coefficients.
+        coeffs (array, optional): Coefficients for the basis ansatz.
     """
-    dt = (t_b - t_a) / (N-1)
+    if basis_ansatz is not None and coeffs is not None:
+        x = basis_ansatz(t_array, coeffs)
+
+    N = len(t_array)
+    dt = (t_array[1] - t_array[0]) / (N-1)
     v = (x[1:] - x[:-1]) / dt  # velocity at each time step
     kinetic_term = 0.5 * m * jnp.sum(v**2)
     potential_term = jnp.sum(potential(x[:-1]))  # sum all contributions
     return (kinetic_term - potential_term) * dt
 
 @partial(jit, static_argnames=('m', 'omega'))
-def harmonic_potential(x, m:float=1., omega:float=1.):
+def harmonic_potential(x, m:float=1., omega:float=jnp.pi):
     return 0.5 * m * omega**2 * x**2
 
 def gradient_descent(function, x, learning_rate: float = 0.001, steps: int = 5000):
