@@ -1,4 +1,4 @@
-# Variational Path Optimization via Gradient Descent
+# Variational Path Optimisation via Gradient Descent
 
 An independent computational physics project implementing the Principle of Least Action through numerical optimisation techniques using JAX and gradient descent methods.
 

@@ -1,5 +1,7 @@
 '''
 The Path Action class.
+
+author: @im@n
 '''
 
 import jax.numpy as jnp
@@ -19,18 +21,6 @@ class PathAction():
         self.basis_ansatz = basis_ansatz
         self.coeffs = coeffs
         self.action = self.compute_action_in_x()
-
-    def compute_action_in_x(self):
-        """
-        Computes the action for a given path x(t) between times t_a and t_b.
-        Used in direct action calculation.
-        """
-        return funcs.action(
-            self.x, 
-            self.time_array, 
-            m=self.m, 
-            potential=self.potential
-        )
     
     def compute_action_in_coeffs(self):
         """
@@ -45,9 +35,4 @@ class PathAction():
             basis_ansatz=self.basis_ansatz, 
             coeffs=self.coeffs
         )
-    
-    
-
-
-    
-        
+ 
